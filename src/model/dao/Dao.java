@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 import model.Asiakas;
@@ -61,10 +60,9 @@ public class Dao {
 		return asiakkaat;
 	}
 	
-	
 	public ArrayList<Asiakas> listaaKaikki(String hakusana){
 		ArrayList<Asiakas> asiakkaat = new ArrayList<Asiakas>();
-		sql = "SELECT * FROM asiakkaat WHERE asiakas_id LIKE ? or etunimi LIKE ? or sukunimi LIKE ?";		
+		sql = "SELECT * FROM asiakkaat WHERE etunimi LIKE ? or sukunimi LIKE ? or sposti LIKE ?";		
 		try {
 			con=yhdista();
 			if(con!=null){ //jos yhteys onnistui
@@ -91,40 +89,81 @@ public class Dao {
 		}		
 		return asiakkaat;
 	}
+	
 	public boolean lisaaAsiakas(Asiakas asiakas) {
-		boolean paluuArvo = true;
-		sql="INSERT INTO asiakkaat VALUES(?,?,?,?,?)";
+		boolean paluuArvo=true;
+		sql="INSERT INTO asiakkaat(etunimi, sukunimi, puhelin, sposti) VALUES(?,?,?,?)";						  
 		try {
 			con = yhdista();
-			stmtPrep=con.prepareStatement(sql);
-			stmtPrep.setInt(1, asiakas.getAsiakas_id());
-			stmtPrep.setString(2, asiakas.getEtunimi());
-			stmtPrep.setString(3, asiakas.getSukunimi());
-			stmtPrep.setString(4, asiakas.getPuhelin());
-			stmtPrep.setString(5, asiakas.getSposti());
+			stmtPrep=con.prepareStatement(sql); 
+			stmtPrep.setString(1, asiakas.getEtunimi());
+			stmtPrep.setString(2, asiakas.getSukunimi());
+			stmtPrep.setString(3, asiakas.getPuhelin());
+			stmtPrep.setString(4, asiakas.getSposti());
 			stmtPrep.executeUpdate();
-			con.close();
-			
-		} catch (SQLException e) {
+			//System.out.println("Uusin id on " + stmtPrep.getGeneratedKeys().getInt(1));
+	        con.close();
+		} catch (Exception e) {				
 			e.printStackTrace();
 			paluuArvo=false;
-		}
+		}				
 		return paluuArvo;
 	}
-	public boolean poistaAsiakas(String asiakas_id) {
+	
+	public boolean poistaAsiakas(int asiakas_id) {
 		boolean paluuArvo=true;
-		sql="DELETE FROM asiakkaat WHERE asiakas_id=?";
+		sql="DELETE FROM asiakkaat WHERE asiakas_id=?";						  
 		try {
 			con = yhdista();
-			stmtPrep=con.prepareStatement(sql);
-			stmtPrep.setString(1,  asiakas_id);
+			stmtPrep=con.prepareStatement(sql); 
+			stmtPrep.setInt(1, asiakas_id);			
 			stmtPrep.executeUpdate();
-			con.close();
-		} catch (Exception e) {
+	        con.close();
+		} catch (Exception e) {				
 			e.printStackTrace();
 			paluuArvo=false;
-		}
+		}				
+		return paluuArvo;
+	}
+	
+	public Asiakas etsiAsiakas(int asiakas_id){
+		Asiakas asiakas = null;
+		sql = "SELECT * FROM asiakkaat WHERE asiakas_id=?";       
+		try {
+			con=yhdista();
+			if(con!=null){ 
+				stmtPrep = con.prepareStatement(sql); 
+				stmtPrep.setInt(1, asiakas_id);
+        		rs = stmtPrep.executeQuery();  
+        		if(rs.isBeforeFirst()){ //jos kysely tuotti dataa, eli rekno on käytössä
+        			//rs.next();
+        			asiakas = new Asiakas(rs.getInt("asiakas_id"), rs.getString("etunimi"), rs.getString("sukunimi"), rs.getString("puhelin"), rs.getString("sposti"));       			
+				}	
+        		con.close(); 
+			}			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}		
+		return asiakas;		
+	}
+	
+	public boolean muutaAsiakas(Asiakas asiakas){
+		boolean paluuArvo=true;
+		sql="UPDATE asiakkaat SET etunimi=?, sukunimi=?, puhelin=?, sposti=? WHERE asiakas_id=?";						  
+		try {
+			con = yhdista();
+			stmtPrep=con.prepareStatement(sql); 
+			stmtPrep.setString(1, asiakas.getEtunimi());
+			stmtPrep.setString(2, asiakas.getSukunimi());
+			stmtPrep.setString(3, asiakas.getPuhelin());
+			stmtPrep.setString(4, asiakas.getSposti());
+			stmtPrep.setInt(5, asiakas.getAsiakas_id());
+			stmtPrep.executeUpdate();
+	        con.close();
+		} catch (Exception e) {				
+			e.printStackTrace();
+			paluuArvo=false;
+		}				
 		return paluuArvo;
 	}
 }
-	
